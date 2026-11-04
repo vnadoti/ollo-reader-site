@@ -827,6 +827,29 @@ img {
   transition: border-color 0.2s ease;
 }
 
+.faq-item.faq-highlight {
+  background: linear-gradient(145deg, rgba(220, 8, 9, 0.1) 0%, var(--bg-card) 60%);
+  border: 1px solid rgba(243, 69, 67, 0.45);
+  box-shadow: 0 10px 30px -10px rgba(220, 8, 9, 0.25);
+}
+
+.faq-badge-shield {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(16, 185, 129, 0.14);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
 .faq-item.open {
   border-color: rgba(243, 69, 67, 0.45);
 }
