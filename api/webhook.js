@@ -45,7 +45,12 @@ module.exports = async function handler(req, res) {
   ) {
     const session = event.data.object;
 
-    if (session.payment_status === "paid") {
+    const isPaid =
+      session.payment_status === "paid" ||
+      session.payment_status === "no_payment_required" ||
+      session.status === "complete";
+
+    if (isPaid) {
       const licenseKey = generateDeterministicLicenseKey(session.id);
       const customerEmail = session.customer_details?.email || "";
       const customerName = session.customer_details?.name || "";
@@ -76,3 +81,4 @@ module.exports = async function handler(req, res) {
 
   return res.status(200).json({ received: true });
 };
+
