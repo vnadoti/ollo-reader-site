@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sua Chave de Licença — Ollo Reader</title>
+  <link rel="icon" type="image/x-icon" href="assets/app.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <a href="index.html" class="brand">
+        <img src="assets/meu-logo.png" alt="Ollo Reader Logo" class="brand-logo" />
+        <span>Ollo Reader</span>
+        <span class="brand-badge">Windows</span>
+      </a>
+      <div class="nav-actions">
+        <a href="index.html" class="btn btn-secondary btn-sm">← Voltar ao Site</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="section" style="padding: 80px 0;">
+    <div class="container" style="max-width: 640px; text-align: center;">
+      <div class="pricing-card featured" style="text-align: center; padding: 48px 36px;">
+        <span class="popular-ribbon">Pagamento Confirmado</span>
+
+        <div id="loading-state">
+          <h2 style="font-size: 1.75rem; margin-bottom: 12px;">Gerando sua Chave Vitalícia...</h2>
+          <p style="color: var(--text-secondary);">Verificando sua compra junto à Stripe, aguarde um instante.</p>
+        </div>
+
+        <div id="success-state" style="display: none;">
+          <div style="font-size: 3rem; margin-bottom: 12px;">🎉</div>
+          <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 10px;">Obrigado pela sua compra!</h1>
+          <p style="color: var(--text-secondary); margin-bottom: 28px;">
+            Aqui está a sua <strong>Chave de Licença Vitalícia</strong> do Ollo Reader. Copie o código abaixo e cole na janela de ativação dentro do aplicativo:
+          </p>
+
+          <div style="background: #09090b; border: 2px dashed var(--accent-hover); border-radius: 12px; padding: 22px; margin-bottom: 20px;">
+            <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 6px;">
+              SUA CHAVE DE ATIVAÇÃO OFICIAL
+            </div>
+            <div id="license-key-display" style="font-family: Consolas, monospace; font-size: 1.85rem; font-weight: 800; color: #ffffff; letter-spacing: 0.06em; user-select: all;">
+              OLLO-XXXX-XXXX-XXXX
+            </div>
+          </div>
+
+          <button id="copy-btn" onclick="copyLicenseKey()" class="btn btn-primary btn-lg" style="width: 100%; margin-bottom: 24px;">
+            📋 Copiar Chave de Licença
+          </button>
+
+          <div style="text-align: left; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 18px; font-size: 0.9rem; color: var(--text-secondary);">
+            <strong style="color: var(--text-primary); display: block; margin-bottom: 8px;">Como ativar no Ollo Reader:</strong>
+            1. Abra o <strong>Ollo Reader</strong> no seu computador Windows.<br>
+            2. Clique no card <strong>"🔑 Avaliação / Ativar Licença Vitalícia"</strong> no canto inferior esquerdo.<br>
+            3. Cole a chave acima e clique em <strong>"Ativar Chave"</strong>. Pronto!
+          </div>
+        </div>
+
+        <div id="error-state" style="display: none;">
+          <h2 style="font-size: 1.5rem; margin-bottom: 12px; color: #f87171;">Não foi possível localizar a sessão</h2>
+          <p id="error-msg" style="color: var(--text-secondary); margin-bottom: 24px;">
+            Verifique se o pagamento foi concluído ou entre em contato com o suporte.
+          </p>
+          <a href="index.html#precos" class="btn btn-secondary">Voltar para a Página Inicial</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    async function loadLicenseKey() {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
+      const loadingEl = document.getElementById('loading-state');
+      const successEl = document.getElementById('success-state');
+      const errorEl = document.getElementById('error-state');
+      const errorMsg = document.getElementById('error-msg');
+
+      if (!sessionId) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        errorMsg.textContent = 'Nenhum ID de sessão de pagamento foi informado na URL.';
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/verify-session?session_id=${encodeURIComponent(sessionId)}`);
+        const data = await res.json();
+
+        if (res.ok && data.paid && data.license_key) {
+          document.getElementById('license-key-display').textContent = data.license_key;
+          loadingEl.style.display = 'none';
+          successEl.style.display = 'block';
+        } else {
+          loadingEl.style.display = 'none';
+          errorEl.style.display = 'block';
+          errorMsg.textContent = data.message || data.error || 'O pagamento ainda não consta como confirmado.';
+        }
+      } catch (err) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+      }
+    }
+
+    function copyLicenseKey() {
+      const key = document.getElementById('license-key-display').textContent.trim();
+      navigator.clipboard.writeText(key);
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = '✓ Chave Copiada!';
+      setTimeout(() => {
+        btn.textContent = '📋 Copiar Chave de Licença';
+      }, 2500);
+    }
+
+    document.addEventListener('DOMContentLoaded', loadLicenseKey);
+  </script>
+</body>
+</html>

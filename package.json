@@ -1,0 +1,9 @@
+{
+  "name": "ollo-reader-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Official sales website and Stripe Checkout license delivery for Ollo Reader",
+  "dependencies": {
+    "stripe": "^21.0.0"
+  }
+}
