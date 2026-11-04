@@ -2,8 +2,8 @@ const { Stripe } = require("stripe");
 const { generateDeterministicLicenseKey, validateLicenseKeyFormat } = require("./_license-helper");
 
 /**
- * Endpoint oficial de ativação única (1 computador por chave).
- * Verifica se a chave existe, se é legítima e vincula o MachineId na Stripe.
+ * Endpoint oficial de ativação única (1 computador por chave) e verificação de reembolso/revogação.
+ * Verifica se a chave existe, se não foi reembolsada/revogada e vincula o MachineId na Stripe.
  */
 module.exports = async function handler(req, res) {
   if (req.method !== "POST" && req.method !== "GET") {
@@ -32,7 +32,6 @@ module.exports = async function handler(req, res) {
 
   const secretKey = process.env.STRIPE_SECRET_KEY ? process.env.STRIPE_SECRET_KEY.trim() : "";
   if (!secretKey) {
-    // Se a variável ainda não estiver ativa, permite ativar pelo formato criptográfico
     return res.status(200).json({
       valid: true,
       activated: true,
@@ -44,18 +43,46 @@ module.exports = async function handler(req, res) {
     const stripe = new Stripe(secretKey);
 
     // 1. Verifica nas sessões de checkout da Stripe se a chave corresponde a uma compra
-    const sessions = await stripe.checkout.sessions.list({ limit: 100 });
+    const sessions = await stripe.checkout.sessions.list({
+      limit: 100,
+      expand: ["data.payment_intent.latest_charge"],
+    });
+
     const matchedSession = sessions.data.find((s) => {
-      const isPaid =
-        s.payment_status === "paid" ||
-        s.payment_status === "no_payment_required" ||
-        s.status === "complete";
-      if (!isPaid) return false;
       const expectedKey = s.metadata?.license_key || generateDeterministicLicenseKey(s.id);
       return expectedKey.toUpperCase() === rawKey;
     });
 
     if (matchedSession) {
+      // Verifica se foi revogada manualmente ou se houve reembolso/estorno na Stripe
+      const pi = matchedSession.payment_intent;
+      const charge = pi && typeof pi === "object" ? pi.latest_charge : null;
+      const isRefunded =
+        matchedSession.metadata?.revoked === "true" ||
+        matchedSession.metadata?.activated_machine_id === "REVOKED" ||
+        (charge && typeof charge === "object" && (charge.refunded === true || charge.amount_refunded > 0));
+
+      if (isRefunded) {
+        return res.status(403).json({
+          valid: false,
+          reason: "revoked_or_refunded",
+          message: "Esta chave de licença foi cancelada devido a reembolso ou estorno do pagamento.",
+        });
+      }
+
+      const isPaid =
+        matchedSession.payment_status === "paid" ||
+        matchedSession.payment_status === "no_payment_required" ||
+        matchedSession.status === "complete";
+
+      if (!isPaid) {
+        return res.status(403).json({
+          valid: false,
+          reason: "unpaid",
+          message: "O pagamento referente a esta chave não consta como concluído.",
+        });
+      }
+
       const existingMachine = matchedSession.metadata?.activated_machine_id;
 
       // Se já foi ativada em OUTRO computador diferente, bloqueia!
@@ -86,8 +113,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // 2. Caso seja uma chave gerada manualmente pelo script gerar-chave.ps1 (não vinda de Checkout Session),
-    // registramos o vínculo de uso único nos metadados de um Customer de controle na Stripe
+    // 2. Caso seja uma chave gerada manualmente pelo script gerar-chave.ps1
     const customers = await stripe.customers.list({
       email: "licenses-registry@olloreader.app",
       limit: 1,
@@ -103,6 +129,14 @@ module.exports = async function handler(req, res) {
     }
 
     const boundMachine = registryCustomer.metadata?.[rawKey];
+    if (boundMachine === "REVOKED") {
+      return res.status(403).json({
+        valid: false,
+        reason: "revoked_or_refunded",
+        message: "Esta chave de licença foi cancelada.",
+      });
+    }
+
     if (boundMachine && boundMachine !== machineId) {
       return res.status(403).json({
         valid: false,

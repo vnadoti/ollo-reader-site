@@ -77,6 +77,29 @@ module.exports = async function handler(req, res) {
         }
       }
     }
+  } else if (event.type === "charge.refunded" || event.type === "charge.dispute.created") {
+    const charge = event.data.object;
+    const paymentIntentId = charge.payment_intent;
+    if (paymentIntentId) {
+      try {
+        const sessions = await stripe.checkout.sessions.list({
+          payment_intent: paymentIntentId,
+          limit: 5,
+        });
+        for (const s of sessions.data) {
+          await stripe.checkout.sessions.update(s.id, {
+            metadata: {
+              ...s.metadata,
+              revoked: "true",
+              activated_machine_id: "REVOKED",
+              revoked_at: new Date().toISOString(),
+            },
+          });
+        }
+      } catch (err) {
+        console.error("Failed to revoke refunded session key:", err.message);
+      }
+    }
   }
 
   return res.status(200).json({ received: true });
