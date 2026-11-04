@@ -97,8 +97,20 @@ async function sendLicenseEmail({ toEmail, customerName, licenseKey }) {
   return { sent: true };
 }
 
+function validateLicenseKeyFormat(rawKey) {
+  if (!rawKey || typeof rawKey !== "string") return false;
+  const clean = rawKey.trim().toUpperCase().replace(/\s+/g, "");
+  const parts = clean.split("-");
+  if (parts.length !== 4 || parts[0] !== "OLLO") return false;
+  const [_, b1, b2, b3] = parts;
+  if (b1.length !== 4 || b2.length !== 4 || b3.length !== 4) return false;
+  const expectedB3 = computeChecksumBlock(b1, b2);
+  return b3 === expectedB3;
+}
+
 module.exports = {
   generateDeterministicLicenseKey,
+  validateLicenseKeyFormat,
   sendLicenseEmail,
 };
 
