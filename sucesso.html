@@ -67,11 +67,16 @@
         </div>
 
         <div id="error-state" style="display: none;">
-          <h2 style="font-size: 1.5rem; margin-bottom: 12px; color: #f87171;">Não foi possível localizar a sessão</h2>
-          <p id="error-msg" style="color: var(--text-secondary); margin-bottom: 24px;">
-            Verifique se o pagamento foi concluído ou entre em contato com o suporte.
+          <h2 style="font-size: 1.5rem; margin-bottom: 12px; color: #fafafa;">Recuperar Minha Chave de Licença</h2>
+          <p id="error-msg" style="color: var(--text-secondary); margin-bottom: 20px;">
+            Digite o mesmo e-mail utilizado na compra para visualizar sua chave na tela e reenviá-la para o seu e-mail:
           </p>
-          <a href="index.html#precos" class="btn btn-secondary">Voltar para a Página Inicial</a>
+          <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+            <input id="recover-email-input" type="email" placeholder="seu-email@exemplo.com" style="flex: 1; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border-subtle); background: #09090b; color: #fff; font-size: 0.95rem;" />
+            <button onclick="recoverByEmail()" class="btn btn-primary">Buscar Chave</button>
+          </div>
+          <p id="recover-feedback" style="font-size: 0.88rem; color: #f87171; display: none; margin-bottom: 14px;"></p>
+          <a href="index.html#precos" class="btn btn-secondary btn-sm">Voltar para a Página Inicial</a>
         </div>
       </div>
     </div>
@@ -89,7 +94,6 @@
       if (!sessionId) {
         loadingEl.style.display = 'none';
         errorEl.style.display = 'block';
-        errorMsg.textContent = 'Nenhum ID de sessão de pagamento foi informado na URL.';
         return;
       }
 
@@ -102,18 +106,57 @@
           if (data.customer_email) {
             const emailNotice = document.getElementById('email-sent-notice');
             emailNotice.style.display = 'block';
-            emailNotice.textContent = `✉️ Uma cópia desta chave também foi enviada para ${data.customer_email}`;
+            emailNotice.textContent = data.email_sent
+              ? `✉️ Uma cópia desta chave também foi enviada para ${data.customer_email}`
+              : `🔑 Chave vinculada ao e-mail ${data.customer_email} (você pode recuperá-la no site a qualquer momento)`;
           }
           loadingEl.style.display = 'none';
           successEl.style.display = 'block';
         } else {
           loadingEl.style.display = 'none';
           errorEl.style.display = 'block';
-          errorMsg.textContent = data.message || data.error || 'O pagamento ainda não consta como confirmado.';
         }
       } catch (err) {
         loadingEl.style.display = 'none';
         errorEl.style.display = 'block';
+      }
+    }
+
+    async function recoverByEmail() {
+      const emailInput = document.getElementById('recover-email-input');
+      const feedback = document.getElementById('recover-feedback');
+      const email = emailInput.value.trim();
+
+      if (!email || !email.includes('@')) {
+        feedback.style.display = 'block';
+        feedback.textContent = 'Por favor, digite um e-mail válido.';
+        return;
+      }
+
+      feedback.style.display = 'block';
+      feedback.style.color = '#a1a1aa';
+      feedback.textContent = 'Buscando sua compra na Stripe...';
+
+      try {
+        const res = await fetch(`/api/recover-key?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+
+        if (res.ok && data.found && data.license_key) {
+          document.getElementById('license-key-display').textContent = data.license_key;
+          const emailNotice = document.getElementById('email-sent-notice');
+          emailNotice.style.display = 'block';
+          emailNotice.textContent = data.email_sent
+            ? `✉️ Também reenviamos uma cópia da chave para ${data.email}!`
+            : `✓ Compra localizada para ${data.email}!`;
+          document.getElementById('error-state').style.display = 'none';
+          document.getElementById('success-state').style.display = 'block';
+        } else {
+          feedback.style.color = '#f87171';
+          feedback.textContent = data.message || data.error || 'Nenhuma compra encontrada para este e-mail.';
+        }
+      } catch (err) {
+        feedback.style.color = '#f87171';
+        feedback.textContent = 'Erro ao consultar o servidor.';
       }
     }
 

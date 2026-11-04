@@ -44,10 +44,10 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const customerEmail = session.customer_details?.email || "";
+    const customerEmail = session.customer_details?.email || session.customer_email || "";
     const customerName = session.customer_details?.name || "";
 
-    let emailStatus = { sent: false };
+    let emailStatus = { sent: false, error: null };
     if (customerEmail && session.metadata?.license_email_sent !== "true") {
       try {
         emailStatus = await sendLicenseEmail({
@@ -66,6 +66,7 @@ module.exports = async function handler(req, res) {
         }
       } catch (emailErr) {
         console.error("Email send warning:", emailErr.message);
+        emailStatus = { sent: false, error: emailErr.message };
       }
     }
 
@@ -75,6 +76,7 @@ module.exports = async function handler(req, res) {
       customer_name: customerName,
       license_key: licenseKey,
       email_sent: emailStatus.sent || session.metadata?.license_email_sent === "true",
+      email_debug: emailStatus,
     });
   } catch (err) {
     console.error("Verify session error:", err.message);

@@ -38,8 +38,8 @@ function generateDeterministicLicenseKey(sessionId) {
 async function sendLicenseEmail({ toEmail, customerName, licenseKey }) {
   if (!toEmail) return { sent: false, reason: "no_recipient_email" };
 
-  const gmailUser = process.env.GMAIL_USER || "vnadoti@gmail.com";
-  const gmailPass = process.env.GMAIL_APP_PASSWORD;
+  const gmailUser = (process.env.GMAIL_USER || "vnadoti@gmail.com").trim();
+  const gmailPass = (process.env.GMAIL_APP_PASSWORD || "").replace(/\s+/g, "");
 
   if (!gmailPass) {
     return { sent: false, reason: "missing_gmail_app_password" };
@@ -101,3 +101,4 @@ module.exports = {
   generateDeterministicLicenseKey,
   sendLicenseEmail,
 };
+
