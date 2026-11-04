@@ -50,9 +50,13 @@
             </div>
           </div>
 
-          <button id="copy-btn" onclick="copyLicenseKey()" class="btn btn-primary btn-lg" style="width: 100%; margin-bottom: 24px;">
+          <button id="copy-btn" onclick="copyLicenseKey()" class="btn btn-primary btn-lg" style="width: 100%; margin-bottom: 16px;">
             📋 Copiar Chave de Licença
           </button>
+
+          <p id="email-sent-notice" style="display: none; font-size: 0.88rem; color: #10b981; margin-bottom: 20px; font-weight: 600;">
+            ✉️ Também enviamos uma cópia desta chave para o seu e-mail!
+          </p>
 
           <div style="text-align: left; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 18px; font-size: 0.9rem; color: var(--text-secondary);">
             <strong style="color: var(--text-primary); display: block; margin-bottom: 8px;">Como ativar no Ollo Reader:</strong>
@@ -95,6 +99,11 @@
 
         if (res.ok && data.paid && data.license_key) {
           document.getElementById('license-key-display').textContent = data.license_key;
+          if (data.customer_email) {
+            const emailNotice = document.getElementById('email-sent-notice');
+            emailNotice.style.display = 'block';
+            emailNotice.textContent = `✉️ Uma cópia desta chave também foi enviada para ${data.customer_email}`;
+          }
           loadingEl.style.display = 'none';
           successEl.style.display = 'block';
         } else {
@@ -122,3 +131,4 @@
   </script>
 </body>
 </html>
+

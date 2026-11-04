@@ -71,3 +71,4 @@ No painel do seu projeto na **Vercel** (`Settings` → `Environment Variables`),
 ### 4. Recursos Úteis da Stripe
 - Documentação e MCP da Stripe: https://docs.stripe.com/mcp
 - Suporte da Stripe: https://support.stripe.com
+

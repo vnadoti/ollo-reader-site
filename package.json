@@ -4,6 +4,7 @@
   "private": true,
   "description": "Official sales website and Stripe Checkout license delivery for Ollo Reader",
   "dependencies": {
+    "nodemailer": "^6.9.16",
     "stripe": "^21.0.0"
   }
 }

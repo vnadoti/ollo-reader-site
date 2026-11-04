@@ -1,38 +1,5 @@
-const crypto = require("crypto");
 const { Stripe } = require("stripe");
-
-const SECRET_SALT = "OLLO_READER_NADOTI_2026_V1_SALT_#99182";
-const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-function computeChecksumBlock(block1, block2) {
-  const payload = `OLLO|${block1.toUpperCase()}|${block2.toUpperCase()}|${SECRET_SALT}`;
-  const hash = crypto.createHash("sha256").update(payload, "utf8").digest();
-  let result = "";
-  for (let i = 0; i < 4; i++) {
-    result += ALPHABET[hash[i] % ALPHABET.length];
-  }
-  return result;
-}
-
-/**
- * Gera uma chave determinística e única vinculada ao ID da sessão paga da Stripe.
- * Assim, mesmo que o comprador recarregue a página de sucesso, ele sempre verá a mesma chave válida.
- */
-function generateDeterministicLicenseKey(sessionId) {
-  const seedHash = crypto
-    .createHash("sha256")
-    .update(`STRIPE_SESSION|${sessionId}|${SECRET_SALT}`, "utf8")
-    .digest();
-
-  let b1 = "";
-  let b2 = "";
-  for (let i = 0; i < 4; i++) {
-    b1 += ALPHABET[seedHash[i] % ALPHABET.length];
-    b2 += ALPHABET[seedHash[i + 4] % ALPHABET.length];
-  }
-  const b3 = computeChecksumBlock(b1, b2);
-  return `OLLO-${b1}-${b2}-${b3}`;
-}
+const { generateDeterministicLicenseKey, sendLicenseEmail } = require("./_license-helper");
 
 module.exports = async function handler(req, res) {
   const { session_id } = req.query;
@@ -53,12 +20,38 @@ module.exports = async function handler(req, res) {
     }
 
     const licenseKey = generateDeterministicLicenseKey(session.id);
+    const customerEmail = session.customer_details?.email || "";
+    const customerName = session.customer_details?.name || "";
+
+    // Dispara também por e-mail caso ainda não tenha sido enviado pelo webhook
+    let emailStatus = { sent: false };
+    if (customerEmail && !session.metadata?.license_email_sent) {
+      try {
+        emailStatus = await sendLicenseEmail({
+          toEmail: customerEmail,
+          customerName,
+          licenseKey,
+        });
+        if (emailStatus.sent) {
+          await stripe.checkout.sessions.update(session.id, {
+            metadata: {
+              ...session.metadata,
+              license_key: licenseKey,
+              license_email_sent: "true",
+            },
+          });
+        }
+      } catch (emailErr) {
+        console.error("Email send warning:", emailErr.message);
+      }
+    }
 
     return res.status(200).json({
       paid: true,
-      customer_email: session.customer_details?.email || "",
-      customer_name: session.customer_details?.name || "",
+      customer_email: customerEmail,
+      customer_name: customerName,
       license_key: licenseKey,
+      email_sent: emailStatus.sent || session.metadata?.license_email_sent === "true",
     });
   } catch (err) {
     console.error("Verify session error:", err);
