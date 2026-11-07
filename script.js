@@ -60,6 +60,11 @@ function selectShowcaseTab(index) {
     btn.classList.toggle('active', idx === index);
   });
 
+  const activeBtn = buttons[index];
+  if (activeBtn && typeof activeBtn.scrollIntoView === 'function') {
+    activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+
   if (imgEl) {
     imgEl.style.opacity = '0.25';
     setTimeout(() => {
@@ -76,6 +81,64 @@ function selectShowcaseTab(index) {
   if (frameTitleEl) {
     frameTitleEl.textContent = currentLang === 'pt' ? item.titlePt : item.titleEn;
   }
+}
+
+function setupMobileMenu() {
+  const toggleBtn = document.getElementById('mobile-menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+  if (!toggleBtn || !mobileMenu) return;
+
+  function closeMenu() {
+    toggleBtn.classList.remove('active');
+    toggleBtn.setAttribute('aria-expanded', 'false');
+    mobileMenu.classList.remove('open');
+    document.body.classList.remove('menu-open');
+  }
+
+  function openMenu() {
+    toggleBtn.classList.add('active');
+    toggleBtn.setAttribute('aria-expanded', 'true');
+    mobileMenu.classList.add('open');
+    document.body.classList.add('menu-open');
+  }
+
+  toggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = mobileMenu.classList.contains('open');
+    if (isOpen) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  });
+
+  // Fecha o menu ao clicar em qualquer link interno
+  mobileMenu.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', () => {
+      closeMenu();
+    });
+  });
+
+  // Fecha o menu ao clicar fora dele
+  document.addEventListener('click', (e) => {
+    if (mobileMenu.classList.contains('open') && !mobileMenu.contains(e.target) && !toggleBtn.contains(e.target)) {
+      closeMenu();
+    }
+  });
+
+  // Fecha o menu com tecla Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mobileMenu.classList.contains('open')) {
+      closeMenu();
+    }
+  });
+
+  // Fecha o menu se a janela for redimensionada para desktop (> 768px)
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768 && mobileMenu.classList.contains('open')) {
+      closeMenu();
+    }
+  });
 }
 
 function setupFaqAccordion() {
@@ -125,6 +188,7 @@ function toggleLanguage() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  setupMobileMenu();
   setupFaqAccordion();
   selectShowcaseTab(0);
 

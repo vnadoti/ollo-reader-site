@@ -26,7 +26,7 @@
 
   <section class="section" style="padding: 80px 0;">
     <div class="container" style="max-width: 640px; text-align: center;">
-      <div class="pricing-card featured" style="text-align: center; padding: 48px 36px;">
+      <div class="pricing-card featured license-success-card" style="text-align: center;">
         <span class="popular-ribbon">Pagamento Confirmado</span>
 
         <div id="loading-state">
@@ -45,7 +45,7 @@
             <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 6px;">
               SUA CHAVE DE ATIVAÇÃO OFICIAL
             </div>
-            <div id="license-key-display" style="font-family: Consolas, monospace; font-size: 1.85rem; font-weight: 800; color: #ffffff; letter-spacing: 0.06em; user-select: all;">
+            <div id="license-key-display" class="license-key-code" style="font-family: Consolas, monospace; font-weight: 800; color: #ffffff; letter-spacing: 0.06em; user-select: all;">
               OLLO-XXXX-XXXX-XXXX
             </div>
           </div>
@@ -71,7 +71,7 @@
           <p id="error-msg" style="color: var(--text-secondary); margin-bottom: 20px;">
             Digite o mesmo e-mail utilizado na compra para visualizar sua chave na tela e reenviá-la para o seu e-mail:
           </p>
-          <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+          <div class="recover-box" style="display: flex; gap: 10px; margin-bottom: 16px;">
             <input id="recover-email-input" type="email" placeholder="seu-email@exemplo.com" style="flex: 1; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border-subtle); background: #09090b; color: #fff; font-size: 0.95rem;" />
             <button onclick="recoverByEmail()" class="btn btn-primary">Buscar Chave</button>
           </div>
