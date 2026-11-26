@@ -160,6 +160,17 @@ img {
   font-size: 0.94rem;
   font-weight: 500;
   color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+@media (max-width: 1240px) {
+  .nav-links {
+    gap: 20px;
+  }
+
+  .nav-links a {
+    font-size: 0.9rem;
+  }
 }
 
 .nav-links a:hover {
@@ -1101,6 +1112,207 @@ img {
   justify-content: space-between;
   color: var(--text-muted);
   font-size: 0.83rem;
+}
+
+/* ==========================================================================
+   Speed Reader (novidade) — pill no hero + demo RSVP
+   ========================================================================== */
+.pill-new {
+  text-decoration: none;
+  color: var(--text-primary);
+  border-color: var(--border-highlight);
+  padding-left: 6px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.pill-new:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent-hover);
+}
+
+.pill-new-tag {
+  background: var(--accent-primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.speed-section {
+  padding-top: 20px;
+}
+
+.sr-demo {
+  display: flex;
+  flex-direction: column;
+}
+
+.sr-demo:hover {
+  transform: none;
+}
+
+.sr-stage {
+  position: relative;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d0d10;
+}
+
+.sr-guide {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.sr-guide::after {
+  content: '';
+  position: absolute;
+  left: 40%;
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.sr-guide-top { top: 68px; }
+.sr-guide-top::after { top: 0; }
+.sr-guide-bottom { bottom: 68px; }
+.sr-guide-bottom::after { bottom: 0; }
+
+/* A letra focal fica sempre alinhada em 40% da largura, como no app */
+.sr-word {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: 40% auto 1fr;
+  align-items: baseline;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  color: var(--text-primary);
+  white-space: pre;
+  line-height: 1;
+}
+
+.sr-pre { text-align: right; }
+.sr-orp { color: #ff3b3b; }
+.sr-post { text-align: left; }
+
+.sr-progress {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sr-progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--accent-primary);
+  transition: width 0.15s linear;
+}
+
+.sr-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--bg-secondary);
+}
+
+.sr-play {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent-primary);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.sr-play:hover { background: var(--accent-hover); }
+.sr-play .sr-icon-pause { display: none; }
+.sr-demo.is-playing .sr-play .sr-icon-play { display: none; }
+.sr-demo.is-playing .sr-play .sr-icon-pause { display: block; }
+
+#sr-wpm {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+}
+
+.sr-wpm-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  min-width: 120px;
+  text-align: right;
+}
+
+.sr-wpm-label strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-shortcuts {
+  margin-top: 40px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px 22px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.sr-shortcuts kbd {
+  display: inline-block;
+  min-width: 24px;
+  padding: 2px 7px;
+  margin-right: 2px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  border-bottom-width: 2px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .sr-stage { height: 180px; }
+  .sr-guide-top { top: 48px; }
+  .sr-guide-bottom { bottom: 48px; }
+  .sr-controls { gap: 10px; padding: 12px; }
+  .sr-wpm-label { min-width: 0; font-size: 0.78rem; }
+  .sr-shortcuts { margin-top: 28px; gap: 8px 14px; font-size: 0.8rem; }
+}
+
+/* Tablets: o menu completo não cabe, usa o menu hambúrguer */
+@media (max-width: 1100px) {
+  .nav-links,
+  .nav-download-btn {
+    display: none !important;
+  }
+
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  .mobile-menu-drawer {
+    display: block;
+  }
 }
 
 /* ==========================================================================

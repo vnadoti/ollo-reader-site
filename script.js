@@ -141,6 +141,122 @@ function setupMobileMenu() {
   });
 }
 
+function setupStoreLinks() {
+  const isWindows = /Windows/i.test(navigator.userAgent);
+  const storeLinks = document.querySelectorAll('a[href*="ms-windows-store:"], a.ms-store-link');
+
+  storeLinks.forEach((link) => {
+    // Se o usuário não estiver no Windows (ex: celular Android/iOS ou macOS), usa a URL web oficial da Store
+    if (!isWindows) {
+      link.href = 'https://apps.microsoft.com/detail/9NGHDBJBDD7G';
+      link.target = '_blank';
+      link.rel = 'noopener';
+    } else {
+      // No Windows, chama diretamente o app nativo da Microsoft Store sem abrir abas em branco
+      link.removeAttribute('target');
+      link.removeAttribute('rel');
+    }
+  });
+}
+
+// ---------- Speed Reader demo (RSVP palavra por palavra) ----------
+const SR_TEXT = {
+  pt: 'Bem-vindo ao Speed Reader do Ollo Reader. Cada palavra aparece no mesmo lugar, então seus olhos não precisam mais correr pela página. A letra em vermelho é o ponto focal: olhe só para ela. Vírgulas, fins de frase e palavras longas ganham uma pausa extra, para o texto continuar natural. Arraste a barra e experimente ler mais rápido.',
+  en: 'Welcome to the Ollo Reader Speed Reader. Every word appears in the same place, so your eyes no longer have to race across the page. The red letter is the focal point: just look at it. Commas, sentence ends and long words get an extra pause, so the text still feels natural. Drag the slider and try reading faster.',
+};
+
+const speedDemo = { words: [], index: 0, timer: null, playing: false, wpm: 300 };
+
+function srFocalIndex(len) {
+  if (len <= 1) return 0;
+  if (len <= 5) return 1;
+  if (len <= 9) return 2;
+  if (len <= 13) return 3;
+  return 4;
+}
+
+function srRender() {
+  const el = document.getElementById('sr-word');
+  const bar = document.getElementById('sr-progress');
+  if (!el) return;
+  const word = speedDemo.words[speedDemo.index] || '';
+  const letters = word.replace(/[^\p{L}\p{N}]/gu, '');
+  const lead = word.search(/[\p{L}\p{N}]/u);
+  const f = Math.max(0, lead) + srFocalIndex(letters.length);
+  el.children[0].textContent = word.slice(0, f);
+  el.children[1].textContent = word.charAt(f);
+  el.children[2].textContent = word.slice(f + 1);
+  if (bar) bar.style.width = ((speedDemo.index + 1) / speedDemo.words.length) * 100 + '%';
+}
+
+function srDelay(word) {
+  let ms = 60000 / speedDemo.wpm;
+  if (/[.!?]$/.test(word)) ms *= 2.2;
+  else if (/[,;:]$/.test(word)) ms *= 1.5;
+  if (word.length > 9) ms *= 1.3;
+  return ms;
+}
+
+function srTick() {
+  srRender();
+  const word = speedDemo.words[speedDemo.index];
+  speedDemo.timer = setTimeout(() => {
+    speedDemo.index = (speedDemo.index + 1) % speedDemo.words.length;
+    // pausa maior ao recomeçar o texto
+    if (speedDemo.index === 0) {
+      speedDemo.timer = setTimeout(srTick, 1200);
+    } else {
+      srTick();
+    }
+  }, srDelay(word));
+}
+
+function srSetPlaying(on) {
+  const demo = document.querySelector('.sr-demo');
+  speedDemo.playing = on;
+  clearTimeout(speedDemo.timer);
+  if (demo) demo.classList.toggle('is-playing', on);
+  if (on) srTick();
+}
+
+function srLoadText() {
+  speedDemo.words = SR_TEXT[currentLang === 'en' ? 'en' : 'pt'].split(/\s+/);
+  speedDemo.index = 0;
+  const value = document.getElementById('sr-wpm-value');
+  if (value) value.textContent = speedDemo.wpm.toLocaleString(currentLang === 'en' ? 'en-US' : 'pt-BR');
+  srRender();
+  if (speedDemo.playing) srSetPlaying(true);
+}
+
+function setupSpeedReaderDemo() {
+  const demo = document.querySelector('.sr-demo');
+  if (!demo) return;
+  const playBtn = document.getElementById('sr-play');
+  const slider = document.getElementById('sr-wpm');
+  const value = document.getElementById('sr-wpm-value');
+
+  srLoadText();
+
+  playBtn.addEventListener('click', () => srSetPlaying(!speedDemo.playing));
+  slider.addEventListener('input', () => {
+    speedDemo.wpm = Number(slider.value);
+    value.textContent = speedDemo.wpm.toLocaleString(currentLang === 'en' ? 'en-US' : 'pt-BR');
+  });
+
+  // Toca sozinho quando aparece na tela (exceto se o usuário pediu menos movimento)
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduceMotion && 'IntersectionObserver' in window) {
+    let userPaused = false;
+    playBtn.addEventListener('click', () => { userPaused = !speedDemo.playing; });
+    new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && !userPaused) srSetPlaying(true);
+        else if (!entry.isIntersecting && speedDemo.playing) srSetPlaying(false);
+      });
+    }, { threshold: 0.5 }).observe(demo);
+  }
+}
+
 function setupFaqAccordion() {
   const faqItems = document.querySelectorAll('.faq-item');
   faqItems.forEach((item) => {
@@ -179,6 +295,7 @@ function toggleLanguage() {
   });
 
   selectShowcaseTab(currentTabIndex);
+  srLoadText();
 
   // Recalculate open FAQ height if any
   const openFaq = document.querySelector('.faq-item.open .faq-answer');
@@ -189,7 +306,9 @@ function toggleLanguage() {
 
 document.addEventListener('DOMContentLoaded', () => {
   setupMobileMenu();
+  setupStoreLinks();
   setupFaqAccordion();
+  setupSpeedReaderDemo();
   selectShowcaseTab(0);
 
   // Open first FAQ item by default
